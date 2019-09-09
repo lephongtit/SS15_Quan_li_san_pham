@@ -58,7 +58,7 @@
             <td>${product.getPrice()}$ </td>
             <td>${product.getKind()}</td>
             <td>
-             <img src="/anh/${product.getAvatar()}" id="image">
+             <img src="<%request.getServletContext().getRealPath("");%>/anh/${product.getAvatar()}" id="image">
             </td>
             <td><a href="/products?action=edit&id=${product.getId()}">edit</a></td>
             <td><a href="/products?action=delete&id=${product.getId()}">delete</a></td>

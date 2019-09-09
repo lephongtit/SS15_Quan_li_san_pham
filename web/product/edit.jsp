@@ -21,7 +21,7 @@
 <p>
     <a href="/products">Back to products list</a>
 </p>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     <fieldset>
         <legend>Product information</legend>
         <table>
@@ -40,6 +40,13 @@
             <tr>
                 <td>Kind: </td>
                 <td><input type="text" name="kind" id="kind" value="${requestScope["product"].getKind()}"></td>
+            </tr>
+            <td>
+                <img src="<%request.getServletContext().getRealPath("");%>/anh/${product.getAvatar()}" id="image">
+            </td>
+            <tr>
+                <td>Avatar:</td>
+                <td><input type="file" name="avatar" id="avatar" value="${requestScope["product"].getAvatar()}"></td>
             </tr>
             <tr>
                 <td></td>

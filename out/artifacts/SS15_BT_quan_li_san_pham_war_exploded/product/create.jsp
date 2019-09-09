@@ -26,7 +26,7 @@
 <p>
     <a href="/products">Back to product list</a>
 </p>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     <fieldset>
         <legend>Product information</legend>
         <table>
@@ -45,6 +45,10 @@
             <tr>
                 <td>Kind: </td>
                 <td><input type="text" name="kind" id="kind"></td>
+            </tr>
+            <tr>
+                <td>Avatar: </td>
+                <td><input type="file" name="file" ></td>
             </tr>
             <tr>
                 <td></td>

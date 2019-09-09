@@ -45,20 +45,21 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product searchByName(String name) {
+    public List<Product> searchByName(String name) {
 
 
         List<Product> list = findAll();
-        for (int i =0; i<list.size(); i++){
-            if (list.get(i).getName().equals(name)){
-                return list.get(i);
-            }
-        }
-//        for (Product product: list){
-//            if (product.getName().equals(name)){
-//                return product;
+//        for (int i =0; i<list.size(); i++){
+//            if (list.get(i).getName().contains(name)){
+//                return list.get(i);
 //            }
 //        }
-        return null;
+        String isLowerName = name.toLowerCase().trim();
+        List<Product> responseProducts = new ArrayList<>();
+        for (Product product : list ){
+            String isLoweProduct = product.getName().toLowerCase().trim();
+            if(isLoweProduct.contains(isLowerName)) responseProducts.add(product);
+        }
+        return responseProducts;
     }
 }

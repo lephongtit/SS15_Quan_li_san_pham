@@ -1,4 +1,5 @@
 package com.codegym.controller;
+
 import com.codegym.model.Product;
 import com.codegym.service.ProductService;
 import com.codegym.service.ProductServiceImpl;
@@ -15,32 +16,32 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name = "ProductServlet",urlPatterns = "/products")
+@WebServlet(name = "ProductServlet", urlPatterns = "/products")
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
         maxFileSize = 1024 * 1024 * 10, // 10MB
         maxRequestSize = 1024 * 1024 * 50) // 50MB
 public class ProductServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
+    // private static final long serialVersionUID = 1L;
     public static final String SAVE_DIRECTORY = "anh";
-    private ProductService productService= new ProductServiceImpl();
+    private ProductService productService = new ProductServiceImpl();
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String action =request.getParameter("action");
-        if (action==null){
-            action="";
+        String action = request.getParameter("action");
+        if (action == null) {
+            action = "";
         }
-        switch (action){
-            case"create":
-                createCustomer(request,response);
+        switch (action) {
+            case "create":
+                createProduct(request, response);
                 break;
-            case"edit":
-                updateProduct(request,response);
+            case "edit":
+                updateProduct(request, response);
                 break;
-            case"delete":
-                deleteCustomer(request,response);
+            case "delete":
+                deleteCustomer(request, response);
                 break;
-            case"search":
-                searchProduct(request,response);
+            case "search":
+                searchProduct(request, response);
                 break;
             case "upload":
                 break;
@@ -49,68 +50,75 @@ public class ProductServlet extends HttpServlet {
 
         }
     }
-private void createCustomer(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    String avatar ="";
-    String fileName = "";
-    String fullSavePath ="";
-    try {
-        // Đường dẫn tuyệt đối tới thư mục gốc của web app.
-        String appPath = request.getServletContext().getRealPath("");
-        appPath = appPath.replace('\\', '/');
-        // Thư mục để save file tải lên.
-        if (appPath.endsWith("/")) {
-            fullSavePath = appPath + SAVE_DIRECTORY;
-        } else {
-            fullSavePath = appPath + "/" + SAVE_DIRECTORY;
-        }
-        // Tạo thư mục nếu nó không tồn tại.
-        File fileSaveDir = new File(fullSavePath);
-        if (!fileSaveDir.exists()) {
-            fileSaveDir.mkdir();
-        }
-        // Danh mục các phần đã upload lên (Có thể là nhiều file).
-        for (Part part : request.getParts()) {
-            fileName = extractFileName(part);
-            if (fileName != null && fileName.length() > 0) {
-                String filePath = fullSavePath + File.separator + fileName;
-                System.out.println("Write attachment to file: " + filePath);
-                // Ghi vào file.
-                part.write(filePath);
-                avatar = fileName;
-                break;
+
+    private void createProduct(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String avatar = "";
+        String fileName = "";
+        String fullSavePath = "";
+        try {
+            // Đường dẫn tuyệt đối tới thư mục gốc của web app.
+            String appPath = request.getServletContext().getRealPath("");
+            appPath = appPath.replace('\\', '/');
+            // Thư mục để save file tải lên.
+            if (appPath.endsWith("/")) {
+                fullSavePath = appPath + SAVE_DIRECTORY;
+            } else {
+                fullSavePath = appPath + "/" + SAVE_DIRECTORY;
             }
+            // Tạo thư mục nếu nó không tồn tại.
+            File fileSaveDir = new File(fullSavePath);
+            if (!fileSaveDir.exists()) {
+                fileSaveDir.mkdir();
+            }
+            // Danh mục các phần đã upload lên (Có thể là nhiều file).
+            for (Part part : request.getParts()) {
+                fileName = extractFileName(part);
+                if (fileName != null && fileName.length() > 0) {
+                    String filePath = fullSavePath + File.separator + fileName;
+                    System.out.println("Write attachment to file: " + filePath);
+                    // Ghi vào file.
+                    part.write(filePath);
+                    avatar = fileName;
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "Error: " + e.getMessage());
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-        request.setAttribute("errorMessage", "Error: " + e.getMessage());
+
+        int id = !request.getParameter("id").equals("") ? Integer.parseInt(request.getParameter("id")) : -1;
+        String name = request.getParameter("name");
+        float price = !request.getParameter("price").equals("") ? Float.parseFloat(request.getParameter("price")) : 0;
+        String kind = request.getParameter("kind");
+        RequestDispatcher dispatcher;
+        if (id == -1) {
+            dispatcher = request.getRequestDispatcher("product/error-404.jsp");
+        } else {
+            Product product = new Product(id, name, price, kind, avatar);
+            this.productService.save(product);
+//         listProducts(request, response);
+
+
+            dispatcher = request.getRequestDispatcher("product/create.jsp");
+            request.setAttribute("message", "New product was created");
+            System.out.println("message");
+        }
+        try {
+            dispatcher.forward(request, response);
+
+        } catch (ServletException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
-        int id = Integer.parseInt(request.getParameter("id"));
-        String name = request.getParameter("name");
-        float price = Float.parseFloat(request.getParameter("price"));
-        String kind = request.getParameter("kind");
-        Product product = new Product(id, name, price, kind, avatar);
-        this.productService.save(product);
-         listProducts(request, response);
-
-
-//      RequestDispatcher dispatcher = request.getRequestDispatcher("product/create.jsp");
-//        request.setAttribute("message", "New product was created");
-//        System.out.println("message");
-//
-//        try {
-//            dispatcher.forward(request, response);
-//
-//        } catch (ServletException e) {
-//           e.printStackTrace();
-//       } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-}
     private void updateProduct(HttpServletRequest request, HttpServletResponse response) {
-        String avatar ="";
+        String avatar = "";
         String fileName = "";
-        String fullSavePath ="";
+        String fullSavePath = "";
         try {
             // Đường dẫn tuyệt đối tới thư mục gốc của web app.
             String appPath = request.getServletContext().getRealPath("");
@@ -153,26 +161,16 @@ private void createCustomer(HttpServletRequest request, HttpServletResponse resp
         //tại sao khi findById lại không trả về avatar cũ
         Product product = this.productService.findById(id);
         RequestDispatcher dispatcher;
-        if (productNew.getAvatar() == null){
-            productNew.setId(id);
-            productNew.setName(name);
-            productNew.setPrice(price);
-            productNew.setKind(kind);
-            productNew.setAvatar(product.getAvatar());
-            this.productService.update(id, productNew);
-            request.setAttribute("product", productNew);
-            request.setAttribute("message", "Product information was updated");
-            dispatcher = request.getRequestDispatcher("product/edit.jsp");
-        } else if(product == null){
+        if (product == null) {
             dispatcher = request.getRequestDispatcher("error-404.jsp");
         } else {
             product.setId(id);
             product.setName(name);
             product.setPrice(price);
             product.setKind(kind);
-            product.setAvatar(avatar);
+            if (avatar != "") product.setAvatar(avatar);
             this.productService.update(id, product);
-            request.setAttribute("prodcut", product);
+            request.setAttribute("product", product);
             request.setAttribute("message", "Product information was updated");
             dispatcher = request.getRequestDispatcher("product/edit.jsp");
         }
@@ -189,7 +187,7 @@ private void createCustomer(HttpServletRequest request, HttpServletResponse resp
         int id = Integer.parseInt(request.getParameter("id"));
         Product product = this.productService.findById(id);
         RequestDispatcher dispatcher;
-        if(product == null){
+        if (product == null) {
             dispatcher = request.getRequestDispatcher("error-404.jsp");
         } else {
             this.productService.remove(id);
@@ -200,56 +198,59 @@ private void createCustomer(HttpServletRequest request, HttpServletResponse resp
             }
         }
     }
-    public void searchProduct(HttpServletRequest request, HttpServletResponse response){
+
+    public void searchProduct(HttpServletRequest request, HttpServletResponse response) {
         String name = request.getParameter("search");
-        Product product = this.productService.searchByName(name);
+        List<Product> product = this.productService.searchByName(name);
         RequestDispatcher dispatcher;
-        if (product==null){
-            dispatcher = request.getRequestDispatcher("error-404.jsp");
-        }else {
-            request.setAttribute("product",product);
+        if (product.size()==0) {
+            dispatcher = request.getRequestDispatcher("product/error-404.jsp");
+        } else {
+            request.setAttribute("product", product);
             dispatcher = request.getRequestDispatcher("product/search.jsp");
         }
-        try{
-            dispatcher.forward(request,response);
-        }catch (ServletException e){
+        try {
+            dispatcher.forward(request, response);
+        } catch (ServletException e) {
             e.printStackTrace();
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-//GET
+
+    //GET
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         String action = request.getParameter("action");
-        if (action==null){
-            action="";
+        if (action == null) {
+            action = "";
         }
-        switch (action){
+        switch (action) {
             case "create":
-                showCreateForm(request,response);
+                showCreateForm(request, response);
                 break;
             case "edit":
-                showEditForm(request,response);
+                showEditForm(request, response);
                 break;
             case "delete":
-                showDeleteForm(request,response);
+                showDeleteForm(request, response);
                 break;
             case "view":
-                viewProduct(request,response);
+                viewProduct(request, response);
                 break;
             default:
-                listProducts(request,response);
+                listProducts(request, response);
                 break;
         }
     }
-    private void listProducts(HttpServletRequest request, HttpServletResponse response){
-        List<Product> products=this.productService.findAll();
-        request.setAttribute("products",products);
 
-        RequestDispatcher dispatcher=request.getRequestDispatcher("product/list.jsp");
-        try{
-            dispatcher.forward(request,response);
+    private void listProducts(HttpServletRequest request, HttpServletResponse response) {
+        List<Product> products = this.productService.findAll();
+        request.setAttribute("products", products);
+
+        RequestDispatcher dispatcher = request.getRequestDispatcher("product/list.jsp");
+        try {
+            dispatcher.forward(request, response);
         } catch (ServletException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -257,6 +258,7 @@ private void createCustomer(HttpServletRequest request, HttpServletResponse resp
         }
 
     }
+
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response) {
         RequestDispatcher dispatcher = request.getRequestDispatcher("product/create.jsp");
         try {
@@ -267,14 +269,15 @@ private void createCustomer(HttpServletRequest request, HttpServletResponse resp
             e.printStackTrace();
         }
     }
-    private void showEditForm(HttpServletRequest request,HttpServletResponse response){
+
+    private void showEditForm(HttpServletRequest request, HttpServletResponse response) {
         int id = Integer.parseInt(request.getParameter("id"));
         Product product = this.productService.findById(id);
         RequestDispatcher dispatcher;
-        if(product == null){
-            dispatcher = request.getRequestDispatcher("error-404.jsp");
+        if (product == null) {
+            dispatcher = request.getRequestDispatcher("product/error-404.jsp");
         } else {
-            request.setAttribute("product",product);
+            request.setAttribute("product", product);
             dispatcher = request.getRequestDispatcher("product/edit.jsp");
         }
         try {
@@ -285,12 +288,13 @@ private void createCustomer(HttpServletRequest request, HttpServletResponse resp
             e.printStackTrace();
         }
     }
+
     private void showDeleteForm(HttpServletRequest request, HttpServletResponse response) {
         int id = Integer.parseInt(request.getParameter("id"));
         Product product = this.productService.findById(id);
         RequestDispatcher dispatcher;
-        if(product == null){
-            dispatcher = request.getRequestDispatcher("error-404.jsp");
+        if (product == null) {
+            dispatcher = request.getRequestDispatcher("product/error-404.jsp");
         } else {
             request.setAttribute("product", product);
             dispatcher = request.getRequestDispatcher("product/delete.jsp");
@@ -303,12 +307,13 @@ private void createCustomer(HttpServletRequest request, HttpServletResponse resp
             e.printStackTrace();
         }
     }
+
     private void viewProduct(HttpServletRequest request, HttpServletResponse response) {
         int id = Integer.parseInt(request.getParameter("id"));
         Product product = this.productService.findById(id);
         RequestDispatcher dispatcher;
         if (product == null) {
-            dispatcher = request.getRequestDispatcher("error-404.jsp");
+            dispatcher = request.getRequestDispatcher("product/error-404.jsp");
         } else {
             request.setAttribute("product", product);
             dispatcher = request.getRequestDispatcher("product/view.jsp");
@@ -321,6 +326,7 @@ private void createCustomer(HttpServletRequest request, HttpServletResponse resp
             e.printStackTrace();
         }
     }
+
     private String extractFileName(Part part) {
         // form-data; name="file"; filename="C:\file1.zip"
         // form-data; name="file"; filename="C:\Note\file2.zip"

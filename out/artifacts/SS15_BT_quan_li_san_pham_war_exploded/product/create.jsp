@@ -32,7 +32,7 @@
         <table>
             <tr>
                 <td>ID: </td>
-                <td><input type="text" name="id" id="id"></td>
+                <td><input type="text" name="id" id="id" placeholder="required"></td>
             </tr>
             <tr>
                 <td>Name: </td>
